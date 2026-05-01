@@ -1,0 +1,22 @@
+huggingface-hub
+# ── Core NLP / ML ────────────────────────────────────────────────────────────
+transformers>=4.40.0          # LegalBERT, tokenisers, Trainer
+torch>=2.1.0                  # PyTorch backend
+sentence-transformers>=2.7.0  # Semantic embeddings (Stage 2)
+datasets>=2.19.0              # HuggingFace Datasets (LexGLUE / ECtHR)
+
+# ── Interpretable classifiers ─────────────────────────────────────────────────
+scikit-learn>=1.4.0           # DecisionTreeClassifier, metrics, pipelines
+interpret>=0.6.0              # Explainable Boosting Machine (EBM)
+
+# ── Data handling ─────────────────────────────────────────────────────────────
+numpy>=1.26.0
+pandas>=2.2.0
+
+# ── Visualisation / reporting ─────────────────────────────────────────────────
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+tqdm>=4.66.0
+joblib>=1.4.0                 # Model serialisation
