@@ -8,7 +8,7 @@ Fine-tuned LegalBERT extracts legal premises from case text, then interpretable 
 
 ## Features
 
-- **12,500+ case dataset** (`all-data/`) with sentence-level argument annotations
+- **12,947 case dataset** (`all-data/`) with sentence-level argument annotations
 - **Dynamic premise extraction** with adaptive per-paragraph thresholds
 - **Similarity-filtered factual negatives** to improve Stage 1 generalization
 - **Concatenated pooling** (max+mean+weighted_mean) for robust embeddings
@@ -27,7 +27,6 @@ NLPPW/
 ├── config.py                              # All hyperparameters and paths
 ├── run_pipeline.py                        # Main entry point (stages 1+2+eval)
 ├── check_contamination.py                 # LexGLUE vs all-data/ fingerprint check
-├── sample.py                              # Inspect random file from all-data/
 ├── visualize.py                           # Visualization utilities
 │
 ├── all-data/                              # 12,500+ annotated JSON files (case, article pairs)
@@ -166,9 +165,8 @@ RANDOM_SEED            = 42
 
 | Source | Used for |
 |--------|----------|
-| `all-data/` (12,500+ JSON files) | Stage 1 fine-tuning |
+| `all-data/` (12,947 JSON files) | Stage 1 fine-tuning |
 | LexGLUE `ecthr_a` (HuggingFace) | Stage 2 labels + Stage 1 inference target |
-| `echr_corpus/ECHR_Corpus.json` (42 docs) | Legacy; superseded by `all-data/` |
 
 ### `all-data/` file structure
 ```json
