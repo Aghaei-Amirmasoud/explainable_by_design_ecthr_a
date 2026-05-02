@@ -59,17 +59,16 @@ FACT_NEGATIVES_CACHE    = OUTPUT_DIR / "fact_negatives_filtered.json"
 
 SENTENCE_TRANSFORMER_MODEL = "sentence-transformers/all-mpnet-base-v2"
 POOLING_STRATEGY = "concat"   # options: max, mean, weighted_mean, concat
-CLASSIFIER_TYPE  = "svm"
+CLASSIFIER_TYPE  = "svm"      # only SVM is supported
 
-DT_MAX_DEPTH   = 10
-DT_MIN_SAMPLES = 5
-DT_CRITERION   = "gini"
+# Hybrid embedding experiment: embed full paragraphs with premise-aware features
+# instead of only extracted premise sentences
+USE_HYBRID_EMBEDDER = False
+HYBRID_PREMISE_WEIGHT_BOOST = 2.0  # multiplier for paragraphs containing premises
 
+# SVM classifier settings
 SVM_C        = 1.0
 SVM_MAX_ITER = 2000
-
-EBM_MAX_BINS   = 256
-EBM_OUTER_BAGS = 8
 
 NUM_LABELS         = 10
 EVAL_AVERAGE       = "macro"

@@ -32,18 +32,58 @@ class CaseTextDataset(Dataset):
         }
 
 
-def _extract_texts(cases, use_premises):
+def _extract_texts(cases, use_premises, use_hybrid=False):
+    """Extract text from cases with optional premise-awareness markers.
+
+    Args:
+        cases: List of case dictionaries
+        use_premises: If True and use_hybrid=False, use only premise sentences
+        use_hybrid: If True, use full paragraphs with [PREMISE] markers around premise sentences
+
+    Returns:
+        List of text strings
+    """
     texts = []
     for c in cases:
-        if use_premises and c.get("premises"):
+        if use_hybrid:
+            # Build paragraph-to-premise mapping
+            para_to_premises = {}
+            for p in c.get("premises", []):
+                para_id = p.get("paragraph_id", -1)
+                if para_id not in para_to_premises:
+                    para_to_premises[para_id] = []
+                para_to_premises[para_id].append(p["sentence"])
+
+            # Mark premise sentences in full paragraphs
+            marked_paragraphs = []
+            for para_idx, paragraph in enumerate(c.get("paragraphs", [])):
+                if para_idx in para_to_premises:
+                    # This paragraph contains premises - mark them
+                    premise_sents = set(para_to_premises[para_idx])
+                    # Simple marking: wrap entire paragraph if it contains premises
+                    # (More sophisticated: mark individual sentences, but that requires re-splitting)
+                    marked_paragraphs.append(f"[PREMISE] {paragraph} [/PREMISE]")
+                else:
+                    marked_paragraphs.append(paragraph)
+            texts.append(" ".join(marked_paragraphs))
+        elif use_premises and c.get("premises"):
             texts.append(" ".join(p["sentence"] for p in c["premises"]))
         else:
             texts.append(" ".join(c["paragraphs"]))
     return texts
 
 
-def train_bert_classifier(train_cases, val_cases, use_premises=True,
+def train_bert_classifier(train_cases, val_cases, use_premises=True, use_hybrid=False,
                           model_name=None, epochs=3, batch_size=16, lr=2e-5):
+    """Train LegalBERT multi-label classifier.
+
+    Args:
+        train_cases, val_cases: Case dictionaries with labels_binary and paragraphs
+        use_premises: Use only premise sentences (ignored if use_hybrid=True)
+        use_hybrid: Use full text with [PREMISE] markers around premise-containing paragraphs
+        model_name: HuggingFace model identifier
+        epochs, batch_size, lr: Training hyperparameters
+    """
     if model_name is None:
         model_name = "nlpaueb/bert-base-uncased-echr"
 
@@ -55,8 +95,8 @@ def train_bert_classifier(train_cases, val_cases, use_premises=True,
         ignore_mismatched_sizes=True,
     ).to(device)
 
-    train_texts  = _extract_texts(train_cases, use_premises)
-    val_texts    = _extract_texts(val_cases, use_premises)
+    train_texts  = _extract_texts(train_cases, use_premises, use_hybrid)
+    val_texts    = _extract_texts(val_cases, use_premises, use_hybrid)
     train_labels = [c["labels_binary"] for c in train_cases]
     val_labels   = [c["labels_binary"] for c in val_cases]
 
@@ -111,9 +151,9 @@ def _evaluate(model, dataloader, device):
     }
 
 
-def predict_bert(model, tokenizer, cases, use_premises=True, batch_size=16):
+def predict_bert(model, tokenizer, cases, use_premises=True, use_hybrid=False, batch_size=16):
     device = next(model.parameters()).device
-    texts  = _extract_texts(cases, use_premises)
+    texts  = _extract_texts(cases, use_premises, use_hybrid)
     labels = [c["labels_binary"] for c in cases]
     ds = CaseTextDataset(texts, labels, tokenizer)
     dl = DataLoader(ds, batch_size=batch_size)

@@ -33,11 +33,19 @@ def _run_stage1(force=False):
 
 
 def _run_stage2(stage1_output):
-    from stage2_outcome_prediction.embedder import PremiseEmbedder
     from stage2_outcome_prediction.classifier import train_classifier, save_classifier, quick_eval
 
     print("=== STAGE 2: Outcome Prediction ===")
-    embedder = PremiseEmbedder()
+
+    # Choose embedder based on config flag
+    if config.USE_HYBRID_EMBEDDER:
+        from stage2_outcome_prediction.embedder_hybrid import HybridPremiseEmbedder
+        embedder = HybridPremiseEmbedder()
+        print("  Using HYBRID embedder (full paragraphs + premise features)")
+    else:
+        from stage2_outcome_prediction.embedder import PremiseEmbedder
+        embedder = PremiseEmbedder()
+        print("  Using PREMISE-ONLY embedder (current approach)")
 
     X_train, y_train = embedder.prepare_split(stage1_output["train"])
     X_test,  y_test  = embedder.prepare_split(stage1_output["test"])
@@ -88,7 +96,7 @@ def main():
     parser.add_argument("--no-eval", action="store_true")
     args = parser.parse_args()
 
-    print(f"Config: CLASSIFIER_TYPE={config.CLASSIFIER_TYPE}")
+    print(f"Config: CLASSIFIER_TYPE={config.CLASSIFIER_TYPE}, USE_HYBRID_EMBEDDER={config.USE_HYBRID_EMBEDDER}")
 
     if args.stage == "1":
         _run_stage1(force=args.force)
@@ -105,9 +113,16 @@ def main():
         )
         from stage1_argument_mining.sequence_filter import load_stage1
         from stage2_outcome_prediction.classifier import load_classifier
-        from stage2_outcome_prediction.embedder import PremiseEmbedder
+
+        # Choose embedder based on config flag (must match training)
+        if config.USE_HYBRID_EMBEDDER:
+            from stage2_outcome_prediction.embedder_hybrid import HybridPremiseEmbedder
+            embedder = HybridPremiseEmbedder()
+        else:
+            from stage2_outcome_prediction.embedder import PremiseEmbedder
+            embedder = PremiseEmbedder()
+
         stage1_output  = load_stage1()
-        embedder       = PremiseEmbedder()
         X_test, y_test = embedder.prepare_split(stage1_output["test"])
         _run_evaluation(stage1_output, load_classifier(), embedder, X_test, y_test)
 
