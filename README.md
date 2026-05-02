@@ -2,7 +2,7 @@
 
 **Two-stage NLP pipeline for predicting ECHR article violations with explainability by design.**
 
-Fine-tuned LegalBERT extracts legal premises from case text, then interpretable classifiers (SVM/Decision Tree/EBM) predict which of 10 ECHR articles were violated, with per-premise attribution.
+Fine-tuned LegalBERT extracts legal premises from case text, then interpretable classifiers (SVM) or deep learning models (LegalBERT) predict which of 10 ECHR articles were violated, with per-premise attribution for explainability.
 
 ---
 
@@ -11,9 +11,17 @@ Fine-tuned LegalBERT extracts legal premises from case text, then interpretable 
 - **12,947 case dataset** (`all-data/`) with sentence-level argument annotations
 - **Dynamic premise extraction** with adaptive per-paragraph thresholds
 - **Similarity-filtered factual negatives** to improve Stage 1 generalization
+- **Three embedding approaches**:
+  - **Baseline**: Raw text embeddings (no premise extraction)
+  - **Premise-only**: Only extracted premise sentences
+  - **Hybrid**: Full paragraphs with premise-awareness features
 - **Concatenated pooling** (max+mean+weighted_mean) for robust embeddings
 - **Per-article threshold tuning** to handle class imbalance
-- **Full explainability**: trace predictions back to specific premises via SVM weights, decision tree paths, or cosine similarity
+- **Premise count analysis**: Performance stratification by extraction density
+- **Multiple model architectures**:
+  - Classical ML: SVM with explainability via weight vectors
+  - Deep Learning: Fine-tuned LegalBERT (full-text, premises, hybrid with markers)
+- **Full explainability**: trace predictions back to specific premises
 - **Contamination checking** to prevent test leakage
 
 ---
@@ -42,14 +50,16 @@ NLPPW/
 │   └── sequence_filter.py                 # Apply extractor to full LexGLUE dataset
 │
 ├── stage2_outcome_prediction/
-│   ├── embedder.py                        # SentenceTransformer + concat pooling
-│   ├── classifier.py                      # MultiOutputClassifier (SVM/DT/EBM)
+│   ├── embedder.py                        # SentenceTransformer + concat pooling (premise-only)
+│   ├── embedder_hybrid.py                 # Hybrid embedder (full text + premise features)
+│   ├── classifier.py                      # MultiOutputClassifier (SVM)
 │   ├── traceback.py                       # Premise-level attribution
-│   └── bert_classifier.py                 # LegalBERT multi-label classifier (baseline)
+│   └── bert_classifier.py                 # LegalBERT multi-label classifier (3 modes)
 │
 ├── evaluation/
 │   ├── metrics.py                         # Macro/micro F1, per-article F1
-│   └── qualitative_review.py              # Manual inspection helpers
+│   ├── qualitative_review.py              # Manual inspection helpers
+│   └── premise_count_analysis.py          # Performance vs premise count stratification
 │
 ├── outputs/                               # Cached models, extracted premises, contamination lists
 ├── colab_pipeline.ipynb                   # Google Colab notebook
@@ -124,28 +134,58 @@ python run_pipeline.py --force
 
 ### Stage 2 — Outcome Prediction
 
-**Embedding:**
-- `all-mpnet-base-v2` (768-d) encodes each premise
+**Three Approaches:**
+
+1. **Baseline (Raw Text)**
+   - Embeds full paragraph text without premise extraction
+   - Useful for zero-premise cases and as performance baseline
+
+2. **Premise-Only (Current Main Approach)**
+   - Embeds only extracted premise sentences
+   - Best for cases with many premises (10+)
+   - Classical ML: 2304-d pooled + 5 handcrafted features = 2309-d
+   - LegalBERT: Fine-tuned on premise text only
+
+3. **Hybrid (Experimental)**
+   - **Classical ML**: Embeds all paragraphs with per-paragraph premise features
+     - Features: `has_premise`, `n_premises`, `premise_density`, `avg_confidence`
+     - Premise-aware weighting (boost factor: 2.0x) during pooling
+     - Best for moderate premise counts (3-5)
+   - **LegalBERT**: Full text with `[PREMISE]` markers around premise paragraphs
+     - Model learns to attend to marked regions
+     - Preserves context while signaling relevance
+
+**Classical ML Embedding:**
+- `all-mpnet-base-v2` (768-d) encodes each premise/paragraph
 - **Concatenated pooling**: max + mean + weighted_mean → 2304-d per case
 - Weighted mean uses premise confidence scores as weights
-- Handcrafted features appended: `used_fallback`, `n_premises`, `avg_confidence`, `max_confidence`, `premise_to_sentence_ratio`
+- Result: 2308-2309 features (2304-d pooled + handcrafted)
 
 **Classification:**
-- `MultiOutputClassifier` (one binary classifier per article)
-- Options: SVM (RBF kernel), Decision Tree, Explainable Boosting Machine (EBM)
-- All use `class_weight='balanced'` for imbalance handling
-- **Per-article threshold tuning**: maximize per-article F1 on validation set
+- **SVM** (`MultiOutputClassifier` with `LinearSVC`)
+  - One binary classifier per article
+  - `class_weight='balanced'` for imbalance handling
+  - **Per-article threshold tuning**: maximize per-article F1 on validation set
+- **LegalBERT** (deep learning alternative)
+  - Fine-tuned on full text, premises, or hybrid (marked) text
+  - End-to-end multi-label classification
 
-**Explainability:**
-- **SVM**: project premise embeddings onto weight vector, rank by contribution
-- **Decision Tree**: extract features used in decision path
-- **EBM/other**: cosine similarity between case embedding and premise embeddings
+**Explainability (SVM):**
+- Project premise embeddings onto SVM weight vector
+- Rank premises by contribution to prediction
+- Trace each article violation back to supporting premises
+
+**Performance Analysis:**
+- Three-way comparison: Baseline vs Premise vs Hybrid
+- Premise count stratification: performance across 0, 1, 2, 3-5, 6-10, 10+ bins
+- Per-article F1 breakdown
 
 ---
 
 ## Key Configuration (`config.py`)
 
 ```python
+# Stage 1 (Argument Mining)
 LEGALBERT_MODEL        = "outputs/stage1_legalbert/checkpoint-best"
 PREMISE_THRESHOLD      = 0.75        # fixed threshold (if dynamic disabled)
 DYNAMIC_TOPK           = True        # adaptive per-paragraph threshold
@@ -153,9 +193,21 @@ DYNAMIC_TOPK_ALPHA     = 0.5         # mean + alpha*std
 PREMISE_FLOOR          = 0.50        # minimum viable score
 FACT_NEGATIVES         = True        # similarity-filtered factual negatives
 FACT_SIM_THRESHOLD     = 0.6         # max cosine sim → safe NON_PREMISE
+
+# Stage 2 (Outcome Prediction)
 SENTENCE_TRANSFORMER   = "all-mpnet-base-v2"
 POOLING_STRATEGY       = "concat"    # max, mean, weighted_mean, concat
-CLASSIFIER_TYPE        = "svm"       # svm, decision_tree, ebm
+CLASSIFIER_TYPE        = "svm"       # only SVM is supported
+
+# Hybrid Experiment
+USE_HYBRID_EMBEDDER          = False  # enable hybrid approach
+HYBRID_PREMISE_WEIGHT_BOOST  = 2.0    # weight multiplier for premise paragraphs
+
+# SVM Settings
+SVM_C                  = 1.0
+SVM_MAX_ITER           = 2000
+
+# General
 RANDOM_SEED            = 42
 ```
 
@@ -199,25 +251,50 @@ RANDOM_SEED            = 42
 |------------|------------------|
 | `outputs/stage1_extracted_premises.json` | `--force` flag or file missing |
 | `outputs/stage1_legalbert/checkpoint-best` | Manually via `finetune_legalbert.py` |
-| `outputs/stage2_classifier.joblib` | Manually or when loaded via `--stage eval` |
+| `outputs/stage2_classifier.joblib` | Premise-only classifier (premise embedder) |
+| `outputs/stage2_classifier_hybrid.joblib` | Hybrid classifier (hybrid embedder) |
 | `outputs/fact_negatives_filtered.json` | Deleted manually (rebuilds with new `FACT_SIM_THRESHOLD`) |
 | `outputs/contaminated_case_ids.json` | `check_contamination.py` re-run |
+| `outputs/premise_count_analysis_*.png` | Generated during evaluation |
 
 ---
 
 ## Notebooks
 
-- **`colab_pipeline.ipynb`**: Google Colab end-to-end pipeline (GPU recommended)
-- **`sagemaker_pipeline.ipynb`**: AWS SageMaker end-to-end pipeline
+Both notebooks include:
+- Stage 1 fine-tuning with similarity-filtered factual negatives
+- Stage 2 classical ML (premise + hybrid) with three-way evaluation
+- LegalBERT comparison (full-text vs premises vs hybrid with markers)
+- Premise count analysis for both classical ML and BERT
+- Qualitative review and demo inference
+
+**Notebooks:**
+- **`colab_pipeline.ipynb`**: Google Colab end-to-end pipeline (T4 GPU recommended)
+- **`sagemaker_pipeline.ipynb`**: AWS SageMaker end-to-end pipeline (ml.g4dn.xlarge or ml.g5.xlarge)
 
 ---
 
 ## Evaluation
 
-Follows LexGLUE protocol:
+**Metrics (LexGLUE protocol):**
 - Appends "No Violation" column (y=1 when all article labels are 0)
-- Reports macro/micro F1, per-article F1
-- Compares SVM vs Decision Tree vs EBM vs baseline
+- Reports macro/micro F1, per-article F1, precision, recall, hamming loss
+
+**Comparisons:**
+1. **Three-way evaluation**: Baseline vs Premise vs Hybrid
+   - Overall metrics table
+   - Per-article F1 breakdown
+   - Determines best approach
+
+2. **Premise count analysis**:
+   - Stratifies test cases by number of extracted premises (0, 1, 2, 3-5, 6-10, 10+)
+   - Shows which approach works best at each density level
+   - Generates plots: `premise_count_analysis_classical.png`, `premise_count_analysis_bert.png`
+
+**Key Findings:**
+- **Classical ML (SVM)**: Hybrid wins overall (macro F1: 0.56), excels at 3-5 premises
+- **Deep Learning (LegalBERT)**: Premises-only wins (macro F1: 0.52), dominates with 10+ premises
+- Architecture choice depends on premise extraction density distribution
 
 ---
 

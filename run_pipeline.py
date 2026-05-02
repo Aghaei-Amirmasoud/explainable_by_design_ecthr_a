@@ -60,24 +60,134 @@ def _run_stage2(stage1_output):
 
 
 def _run_evaluation(stage1_output, clf, embedder, X_test, y_test):
-    from stage2_outcome_prediction.classifier import predict
-    from evaluation.metrics import (compare_classifiers, per_article_f1,
-                                    print_per_article_f1, train_baseline_classifier)
+    from stage2_outcome_prediction.classifier import predict, predict_with_thresholds, tune_thresholds
+    from evaluation.metrics import (compute_metrics, per_article_f1, train_baseline_classifier)
     from evaluation.qualitative_review import run_qualitative_review
-    from visualize import generate_all_plots
+    from evaluation.premise_count_analysis import (
+        group_cases_by_premise_count, plot_premise_count_analysis, print_premise_count_table)
+    from data.data_loader import ARTICLE_NAMES
 
-    print("=== EVALUATION ===")
-    y_pred_pipeline = predict(clf, X_test)
-    y_pred_baseline, _ = train_baseline_classifier(stage1_output["train"], stage1_output["test"], embedder)
+    print("="*70)
+    print("THREE-WAY EVALUATION: Baseline vs Premise vs Hybrid")
+    print("="*70)
 
-    comparison    = compare_classifiers(y_test, y_pred_baseline, y_pred_pipeline)
-    pa_f1_results = per_article_f1(y_test, y_pred_pipeline)
-    print_per_article_f1(pa_f1_results)
+    # 1. Baseline (raw text, no premise extraction)
+    print("\n[1/3] Training baseline (raw text)...")
+    y_pred_baseline, clf_baseline = train_baseline_classifier(
+        stage1_output['train'], stage1_output['test'], embedder)
 
-    run_qualitative_review(stage1_output["test"], X_test, clf, embedder)
-    generate_all_plots(comparison=comparison, pa_f1_results=pa_f1_results,
-                       stage1_output=stage1_output, clf=clf, X_test=X_test)
-    return comparison
+    # 2. Premise (current approach)
+    print("\n[2/3] Evaluating premise classifier...")
+    X_val, y_val = embedder.prepare_split(stage1_output['val'])
+    thresholds_premise = tune_thresholds(clf, X_val, y_val)
+    print("  Tuned thresholds:")
+    for name, t in zip(ARTICLE_NAMES, thresholds_premise):
+        print(f"    {name:<12} threshold={t:+.4f}")
+    y_pred_premise = predict_with_thresholds(clf, X_test, thresholds_premise)
+
+    # 3. Hybrid (if enabled)
+    if config.USE_HYBRID_EMBEDDER:
+        print("\n[3/3] Evaluating hybrid classifier...")
+        from stage2_outcome_prediction.embedder_hybrid import HybridPremiseEmbedder
+        embedder_hybrid = HybridPremiseEmbedder()
+        X_train_hybrid, y_train_hybrid = embedder_hybrid.prepare_split(stage1_output['train'])
+        X_val_hybrid, y_val_hybrid = embedder_hybrid.prepare_split(stage1_output['val'])
+        X_test_hybrid, y_test_hybrid = embedder_hybrid.prepare_split(stage1_output['test'])
+
+        from stage2_outcome_prediction.classifier import train_classifier
+        clf_hybrid = train_classifier(X_train_hybrid, y_train_hybrid)
+        thresholds_hybrid = tune_thresholds(clf_hybrid, X_val_hybrid, y_val_hybrid)
+        y_pred_hybrid = predict_with_thresholds(clf_hybrid, X_test_hybrid, thresholds_hybrid)
+
+        # Three-way comparison
+        metrics_baseline = compute_metrics(y_test, y_pred_baseline)
+        metrics_premise = compute_metrics(y_test, y_pred_premise)
+        metrics_hybrid = compute_metrics(y_test_hybrid, y_pred_hybrid)
+
+        print("\n" + "="*70)
+        print("OVERALL METRICS")
+        print("="*70)
+        print(f"{'Metric':<22} {'Baseline':>15} {'Premise':>15} {'Hybrid':>15}")
+        print("="*70)
+        for metric in ['macro_f1', 'micro_f1', 'macro_precision', 'macro_recall',
+                       'micro_precision', 'micro_recall']:
+            b = metrics_baseline[metric]
+            p = metrics_premise[metric]
+            h = metrics_hybrid[metric]
+            print(f"{metric:<22} {b:>15.4f} {p:>15.4f} {h:>15.4f}")
+        print("="*70)
+
+        # Per-article comparison
+        pa_f1_baseline = per_article_f1(y_test, y_pred_baseline)
+        pa_f1_premise = per_article_f1(y_test, y_pred_premise)
+        pa_f1_hybrid = per_article_f1(y_test_hybrid, y_pred_hybrid)
+
+        print("\n" + "="*80)
+        print("PER-ARTICLE F1 SCORES")
+        print("="*80)
+        print(f"{'Article':<16} {'Baseline':>15} {'Premise':>15} {'Hybrid':>15} {'Support':>10}")
+        print("="*80)
+        for r in pa_f1_baseline:
+            article = r['article']
+            b = {r['article']: r['f1'] for r in pa_f1_baseline}.get(article, 0.0)
+            p = {r['article']: r['f1'] for r in pa_f1_premise}.get(article, 0.0)
+            h = {r['article']: r['f1'] for r in pa_f1_hybrid}.get(article, 0.0)
+            support = r['support']
+            print(f"{article:<16} {b:>15.4f} {p:>15.4f} {h:>15.4f} {support:>10}")
+        print("="*80)
+
+        best = max([('Baseline', metrics_baseline['macro_f1']),
+                    ('Premise', metrics_premise['macro_f1']),
+                    ('Hybrid', metrics_hybrid['macro_f1'])], key=lambda x: x[1])
+        print(f"\nBest approach: {best[0]} (macro F1: {best[1]:.4f})")
+
+        # Premise count analysis
+        print("\n" + "="*70)
+        print("PREMISE COUNT ANALYSIS")
+        print("="*70)
+        predictions_classical = {
+            'Baseline': y_pred_baseline,
+            'Premise': y_pred_premise,
+            'Hybrid': y_pred_hybrid
+        }
+        results_classical = group_cases_by_premise_count(stage1_output['test'], predictions_classical)
+        print("\nPerformance by number of extracted premises:")
+        print_premise_count_table(results_classical)
+        plot_premise_count_analysis(
+            results_classical,
+            title="Classical ML: Performance vs Premise Count",
+            output_path=config.OUTPUT_DIR / "premise_count_analysis_classical.png",
+            colors={'Baseline': '#1f77b4', 'Premise': '#ff7f0e', 'Hybrid': '#2ca02c'}
+        )
+    else:
+        # Two-way comparison (baseline vs premise)
+        metrics_baseline = compute_metrics(y_test, y_pred_baseline)
+        metrics_premise = compute_metrics(y_test, y_pred_premise)
+
+        print("\n" + "="*70)
+        print("OVERALL METRICS")
+        print("="*70)
+        print(f"{'Metric':<22} {'Baseline':>15} {'Premise':>15}")
+        print("="*70)
+        for metric in ['macro_f1', 'micro_f1', 'macro_precision', 'macro_recall']:
+            b = metrics_baseline[metric]
+            p = metrics_premise[metric]
+            print(f"{metric:<22} {b:>15.4f} {p:>15.4f}")
+        print("="*70)
+
+        pa_f1_results = per_article_f1(y_test, y_pred_premise)
+        print("\n" + "="*80)
+        print("PER-ARTICLE F1 SCORES (Premise)")
+        print("="*80)
+        for r in pa_f1_results:
+            print(f"{r['article']:<16} {r['f1']:>15.4f} {r['support']:>10}")
+        print("="*80)
+
+    # Qualitative review
+    print("\n" + "="*70)
+    print("QUALITATIVE REVIEW (Premise Classifier)")
+    print("="*70)
+    run_qualitative_review(stage1_output['test'], X_test, clf, embedder)
 
 
 def _require(*caches):
