@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, get_linear_schedule_with_warmup
 from sklearn.metrics import f1_score
 from tqdm import tqdm
 import config
@@ -74,7 +74,8 @@ def _extract_texts(cases, use_premises, use_hybrid=False):
 
 
 def train_bert_classifier(train_cases, val_cases, use_premises=True, use_hybrid=False,
-                          model_name=None, epochs=3, batch_size=16, lr=2e-5):
+                          model_name=None, epochs=3, batch_size=16, lr=2e-5,
+                          warmup_ratio=0.0, weight_decay=0.0):
     """Train LegalBERT multi-label classifier.
 
     Args:
@@ -83,6 +84,8 @@ def train_bert_classifier(train_cases, val_cases, use_premises=True, use_hybrid=
         use_hybrid: Use full text with [PREMISE] markers around premise-containing paragraphs
         model_name: HuggingFace model identifier
         epochs, batch_size, lr: Training hyperparameters
+        warmup_ratio: Ratio of total steps for learning rate warmup (default: 0.0)
+        weight_decay: Weight decay for AdamW optimizer (default: 0.0)
     """
     if model_name is None:
         model_name = "nlpaueb/bert-base-uncased-echr"
@@ -105,7 +108,19 @@ def train_bert_classifier(train_cases, val_cases, use_premises=True, use_hybrid=
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_dl   = DataLoader(val_ds,   batch_size=batch_size)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+    # Optimizer with optional weight decay
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    # Optional learning rate scheduler with warmup
+    scheduler = None
+    if warmup_ratio > 0.0:
+        total_steps = len(train_dl) * epochs
+        warmup_steps = int(total_steps * warmup_ratio)
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps
+        )
+        print(f"Using warmup: {warmup_steps}/{total_steps} steps (ratio={warmup_ratio})")
+
     best_f1, best_state = 0.0, None
 
     for epoch in range(epochs):
@@ -116,6 +131,8 @@ def train_bert_classifier(train_cases, val_cases, use_premises=True, use_hybrid=
             out = model(**batch)
             out.loss.backward()
             optimizer.step()
+            if scheduler is not None:
+                scheduler.step()  # Update learning rate with warmup
             optimizer.zero_grad()
             total_loss += out.loss.item()
 
