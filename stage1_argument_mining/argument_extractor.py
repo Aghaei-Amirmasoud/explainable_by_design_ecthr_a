@@ -117,20 +117,3 @@ class LegalBERTArgumentExtractor:
             selected = sorted(selected, key=lambda x: x[2], reverse=True)[:config.DYNAMIC_TOPK_MAX]
 
         return selected
-
-
-if __name__ == "__main__":
-    sample = [
-        "The applicant was born in 1975 and lives in Ankara.",
-        "THE LAW\nThe applicant alleged ill-treatment in violation of Article 3. "
-        "The Court finds that the state failed to conduct an effective investigation. "
-        "It follows that there has been a violation of Article 13.",
-        "The case was communicated to the Government on 12 March 2008.",
-    ]
-    extractor = LegalBERTArgumentExtractor()
-    results = extractor.extract_premises(sample)
-    if results:
-        for p in results:
-            print(f"  [para {p['paragraph_id']}] (conf={p['confidence']:.3f}) {p['sentence'][:120]}")
-    else:
-        print("No premises found — run finetune_legalbert.py first to train the classifier.")

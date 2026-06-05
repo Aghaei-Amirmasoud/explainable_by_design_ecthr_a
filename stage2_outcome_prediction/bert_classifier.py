@@ -33,16 +33,6 @@ class CaseTextDataset(Dataset):
 
 
 def _extract_texts(cases, use_premises, use_hybrid=False):
-    """Extract text from cases with optional premise-awareness markers.
-
-    Args:
-        cases: List of case dictionaries
-        use_premises: If True and use_hybrid=False, use only premise sentences
-        use_hybrid: If True, use full paragraphs with [PREMISE] markers around premise sentences
-
-    Returns:
-        List of text strings
-    """
     texts = []
     for c in cases:
         if use_hybrid:
@@ -76,17 +66,6 @@ def _extract_texts(cases, use_premises, use_hybrid=False):
 def train_bert_classifier(train_cases, val_cases, use_premises=True, use_hybrid=False,
                           model_name=None, epochs=3, batch_size=16, lr=2e-5,
                           warmup_ratio=0.0, weight_decay=0.0):
-    """Train LegalBERT multi-label classifier.
-
-    Args:
-        train_cases, val_cases: Case dictionaries with labels_binary and paragraphs
-        use_premises: Use only premise sentences (ignored if use_hybrid=True)
-        use_hybrid: Use full text with [PREMISE] markers around premise-containing paragraphs
-        model_name: HuggingFace model identifier
-        epochs, batch_size, lr: Training hyperparameters
-        warmup_ratio: Ratio of total steps for learning rate warmup (default: 0.0)
-        weight_decay: Weight decay for AdamW optimizer (default: 0.0)
-    """
     if model_name is None:
         model_name = "nlpaueb/bert-base-uncased-echr"
 

@@ -97,24 +97,3 @@ def save_embeddings(X, path=str(config.STAGE2_CACHE)):
 
 def load_embeddings(path=str(config.STAGE2_CACHE)):
     return np.load(path)
-
-
-if __name__ == "__main__":
-    dummy = [
-        {
-            "paragraphs":    ["The applicant was detained without a court order."],
-            "labels_binary": [0] * 10,
-            "premises": [
-                {"sentence": "The applicant was detained without a court order.", "paragraph_id": 0, "sentence_id": 0, "confidence": 0.91},
-                {"sentence": "The state failed to provide an effective remedy.",  "paragraph_id": 0, "sentence_id": 1, "confidence": 0.85},
-            ],
-        },
-        {
-            "paragraphs":    ["The applicant alleged ill-treatment under Article 3."],
-            "labels_binary": [0] * 10,
-            "premises": [],
-        },
-    ]
-    embedder = PremiseEmbedder()
-    X, y = embedder.prepare_split(dummy)
-    print(f"X shape: {X.shape}   y shape: {y.shape}  (case 2 used paragraph fallback)")

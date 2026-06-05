@@ -1,21 +1,3 @@
-"""
-Hybrid Premise-Aware Embedder (Experimental)
-
-Instead of discarding non-premise paragraphs, this embedder:
-1. Embeds ALL paragraphs from the full case text
-2. Augments each paragraph with premise-awareness features:
-   - has_premise: binary flag indicating if any sentence was extracted as premise
-   - n_premises_in_para: count of premise sentences from this paragraph
-   - premise_density: ratio of premise sentences to total sentences in paragraph
-   - avg_premise_confidence: mean LegalBERT score for premises from this paragraph
-3. Pools paragraph embeddings with optional premise-aware weighting
-
-This captures both the full textual context (including non-premise content)
-and explicit relevance signals from Stage 1 argument mining.
-
-Usage:
-    Set config.USE_HYBRID_EMBEDDER = True to use this instead of PremiseEmbedder
-"""
 import re
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -56,14 +38,6 @@ class HybridPremiseEmbedder:
             return (para_embs * w[:, None]).sum(axis=0)
 
     def _build_paragraph_premise_map(self, case):
-        """Map paragraph_id -> list of premises extracted from that paragraph.
-
-        Args:
-            case: Dict with 'premises' key containing list of premise dicts
-
-        Returns:
-            Dict mapping paragraph_id (int) -> list of premise dicts
-        """
         para_map = {}
         for p in case.get("premises", []):
             para_id = p.get("paragraph_id", -1)
@@ -73,10 +47,6 @@ class HybridPremiseEmbedder:
         return para_map
 
     def _extract_premise_features(self, paragraph_text, premises_in_para):
-        """Extract premise-aware features for a single paragraph.
-
-        Returns: [has_premise, n_premises, premise_density, avg_confidence]
-        """
         has_premise = float(len(premises_in_para) > 0)
         n_premises = len(premises_in_para)
 
@@ -92,21 +62,6 @@ class HybridPremiseEmbedder:
     def embed_paragraphs_with_premise_features(self, cases, batch_size=64,
                                                strategy=config.POOLING_STRATEGY,
                                                premise_weight_boost=None):
-        """Embed all paragraphs with premise-aware features.
-
-        Args:
-            cases: List of case dicts with 'paragraphs' and 'premises' keys
-            batch_size: Batch size for sentence transformer
-            strategy: Pooling strategy (max, mean, weighted_mean, concat)
-            premise_weight_boost: Multiplier for paragraphs containing premises
-                                 (default from config.HYBRID_PREMISE_WEIGHT_BOOST)
-
-        Returns:
-            (n_cases, base_dim + 4) array where:
-                base_dim = embedding_dim * n_strategies (e.g., 768*3=2304 for concat)
-                +4 = case-level premise features [has_any_premise, total_premises,
-                     avg_density, avg_confidence]
-        """
         if premise_weight_boost is None:
             premise_weight_boost = config.HYBRID_PREMISE_WEIGHT_BOOST
 
@@ -182,16 +137,7 @@ class HybridPremiseEmbedder:
         return np.array([c["labels_binary"] for c in cases], dtype=int)
 
     def prepare_split(self, cases, **kwargs):
-        """Prepare (X, y) for a dataset split using hybrid approach.
-
-        Args:
-            cases: List of case dictionaries
-            **kwargs: Additional arguments passed to embed_paragraphs_with_premise_features
-
-        Returns:
-            X: (n_cases, feature_dim) array with embeddings + premise features
-            y: (n_cases, n_labels) binary label array
-        """
+        """Prepare (X, y) for a dataset split using hybrid approach."""
         X_base = self.embed_paragraphs_with_premise_features(cases, **kwargs)
 
         # Add additional handcrafted features (same as original embedder for consistency)
@@ -213,64 +159,3 @@ class HybridPremiseEmbedder:
         y = self.extract_labels(cases)
 
         return X, y
-
-
-if __name__ == "__main__":
-    # Test with dummy data
-    print("Testing HybridPremiseEmbedder...\n")
-
-    dummy_cases = [
-        {
-            "paragraphs": [
-                "The applicant was detained without a court order. This violated his rights.",
-                "The case was communicated to the Government on 12 March 2008.",
-            ],
-            "labels_binary": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],  # Article 5 violated
-            "premises": [
-                {"sentence": "The applicant was detained without a court order.",
-                 "paragraph_id": 0, "sentence_id": 0, "confidence": 0.91},
-                {"sentence": "This violated his rights.",
-                 "paragraph_id": 0, "sentence_id": 1, "confidence": 0.78},
-            ],
-        },
-        {
-            "paragraphs": [
-                "The applicant alleged ill-treatment under Article 3.",
-                "The state failed to investigate the allegations properly.",
-            ],
-            "labels_binary": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],  # Article 3 violated
-            "premises": [
-                {"sentence": "The state failed to investigate the allegations properly.",
-                 "paragraph_id": 1, "sentence_id": 0, "confidence": 0.85},
-            ],
-        },
-        {
-            "paragraphs": [
-                "The proceedings began on 15 January 2005.",
-                "The applicant was represented by counsel.",
-            ],
-            "labels_binary": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # No violation
-            "premises": [],  # No premises extracted
-        },
-    ]
-
-    embedder = HybridPremiseEmbedder()
-    X, y = embedder.prepare_split(dummy_cases)
-
-    print(f"\nResults:")
-    print(f"  X shape: {X.shape}")
-    print(f"  y shape: {y.shape}")
-    print(f"\nFeature dimensions breakdown:")
-    print(f"  - Base embeddings (concat pooling): {embedder.dim * 3} = {embedder.dim} × 3")
-    print(f"  - Case-level premise features: 4")
-    print(f"    [has_any_premise, total_premises, avg_density, avg_confidence]")
-    print(f"  - Additional handcrafted features: 5")
-    print(f"    [used_fallback, n_prem, avg_conf, max_conf, premise_ratio]")
-    print(f"  - Total: {X.shape[1]}")
-    print(f"\nCase 1 (2 premises in para 0):")
-    print(f"  Premise features: {X[0, embedder.dim*3:embedder.dim*3+4]}")
-    print(f"Case 2 (1 premise in para 1):")
-    print(f"  Premise features: {X[1, embedder.dim*3:embedder.dim*3+4]}")
-    print(f"Case 3 (0 premises):")
-    print(f"  Premise features: {X[2, embedder.dim*3:embedder.dim*3+4]}")
-    print(f"\nTest passed! All paragraphs embedded with premise indicators.")

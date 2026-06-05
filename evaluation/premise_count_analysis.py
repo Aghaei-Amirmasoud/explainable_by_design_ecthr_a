@@ -1,12 +1,3 @@
-"""
-Premise Count Analysis
-
-Analyzes how classifier performance varies with the number of premises extracted per case.
-Useful for understanding:
-- Which approach handles sparse vs rich premise cases better
-- Whether premise extraction quality affects overall performance
-- If hybrid approaches provide benefits across all premise counts
-"""
 import numpy as np
 from sklearn.metrics import f1_score
 import matplotlib.pyplot as plt
@@ -14,20 +5,6 @@ from pathlib import Path
 
 
 def group_cases_by_premise_count(cases, predictions_dict):
-    """Group cases by number of premises and calculate F1 per group.
-
-    Args:
-        cases: List of case dicts with 'premises' and 'labels_binary'
-        predictions_dict: Dict mapping approach_name -> predictions array
-            e.g., {'Baseline': y_pred_baseline, 'Premise': y_pred_premise}
-
-    Returns:
-        results: Dict with keys:
-            - 'bins': List of bin labels (e.g., '0', '1', '2', '3-5', '6-10', '10+')
-            - 'bin_ranges': List of (min, max) tuples for each bin
-            - 'counts': List of case counts per bin
-            - 'approaches': Dict mapping approach_name -> {'macro_f1': [...], 'micro_f1': [...]}
-    """
     # Define bins
     bins = [
         ('0', 0, 0),
@@ -92,14 +69,6 @@ def group_cases_by_premise_count(cases, predictions_dict):
 
 def plot_premise_count_analysis(results, title="Performance vs Premise Count",
                                 output_path=None, colors=None):
-    """Plot F1 scores vs premise count for multiple approaches.
-
-    Args:
-        results: Output from group_cases_by_premise_count()
-        title: Plot title
-        output_path: If provided, save plot to this path
-        colors: Dict mapping approach_name -> color (optional)
-    """
     if colors is None:
         colors = {
             'Baseline': '#1f77b4',
@@ -188,25 +157,3 @@ def print_premise_count_table(results):
         print(row)
 
     print("="*len(header))
-
-
-if __name__ == "__main__":
-    # Test with dummy data
-    import numpy as np
-
-    dummy_cases = [
-        {'premises': [], 'labels_binary': [0]*10},  # 0 premises
-        {'premises': [{'sentence': 'x'}], 'labels_binary': [1,0,0,0,0,0,0,0,0,0]},  # 1 premise
-        {'premises': [{'sentence': 'x'}]*2, 'labels_binary': [0,1,0,0,0,0,0,0,0,0]},  # 2 premises
-        {'premises': [{'sentence': 'x'}]*5, 'labels_binary': [1,1,0,0,0,0,0,0,0,0]},  # 5 premises
-    ]
-
-    predictions = {
-        'Baseline': np.array([[0]*10, [1,0,0,0,0,0,0,0,0,0], [0,1,0,0,0,0,0,0,0,0], [1,1,0,0,0,0,0,0,0,0]]),
-        'Premise': np.array([[0]*10, [1,0,0,0,0,0,0,0,0,0], [0,1,0,0,0,0,0,0,0,0], [1,1,0,0,0,0,0,0,0,0]]),
-    }
-
-    results = group_cases_by_premise_count(dummy_cases, predictions)
-    print("\nTest Results:")
-    print_premise_count_table(results)
-    print("\nTest passed!")

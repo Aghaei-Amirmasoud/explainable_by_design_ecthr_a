@@ -1,16 +1,3 @@
-"""
-Fine-tunes LegalBERT for binary sentence-level premise classification
-using the 12 500+ case ECtHR dataset in config.NEW_DATASET_DIR.
-
-Splitting is done at the case_id level so that no case appears in more than
-one split.  Files sharing the same case_id (different articles) are always
-kept together.  Contaminated case_ids (outputs/contaminated_case_ids.json)
-are excluded automatically if the file exists.
-
-Usage:
-    python stage1_argument_mining/finetune_legalbert.py
-    python stage1_argument_mining/finetune_legalbert.py --epochs 5 --batch-size 32
-"""
 import argparse
 import json
 import random
@@ -31,9 +18,6 @@ LABEL2ID = {"NON_PREMISE": 0, "PREMISE": 1}
 BASE_MODEL = "nlpaueb/bert-base-uncased-echr"
 
 
-# ---------------------------------------------------------------------------
-# Data loading — case-level split
-# ---------------------------------------------------------------------------
 
 def _load_exclusion_list() -> set:
     path = config.OUTPUT_DIR / "contaminated_case_ids.json"
@@ -45,17 +29,6 @@ def _load_exclusion_list() -> set:
 
 
 def load_new_dataset(dataset_dir=config.NEW_DATASET_DIR, excluded=None) -> dict:
-    """
-    Reads all JSON files in dataset_dir and groups sentences by case_id.
-
-    Returns:
-        dict  case_id -> list of {"text": str, "label": int}
-
-    Label derivation:
-        agent "Applicant" or "State"  → PREMISE     (1)
-        agent "Non-Argument"          → NON_PREMISE  (0)
-        agent "ECHR"                  → skipped (would leak outcome)
-    """
     if excluded is None:
         excluded = set()
 
@@ -91,14 +64,7 @@ def load_new_dataset(dataset_dir=config.NEW_DATASET_DIR, excluded=None) -> dict:
 
 def make_new_dataset_splits(cases: dict, val_ratio=0.15, test_ratio=0.15,
                              seed=config.RANDOM_SEED):
-    """
-    Splits at the case_id level so no case appears in more than one split,
-    then flattens sentences within each split.
 
-    Returns:
-        (train_rows, val_rows, test_rows, split_stats)
-        split_stats is a dict with case counts per split
-    """
     case_ids = list(cases.keys())
     random.seed(seed)
     random.shuffle(case_ids)
@@ -120,10 +86,6 @@ def make_new_dataset_splits(cases: dict, val_ratio=0.15, test_ratio=0.15,
 
 
 def balance_classes(rows: list, seed=config.RANDOM_SEED) -> list:
-    """
-    Undersample whichever class is the majority to produce a balanced training set.
-    Val and test sets are left untouched so evaluation reflects real distribution.
-    """
     random.seed(seed)
     premises     = [r for r in rows if r["label"] == 1]
     non_premises = [r for r in rows if r["label"] == 0]
@@ -132,10 +94,6 @@ def balance_classes(rows: list, seed=config.RANDOM_SEED) -> list:
     random.shuffle(balanced)
     return balanced
 
-
-# ---------------------------------------------------------------------------
-# Shared helpers
-# ---------------------------------------------------------------------------
 
 def compute_metrics(eval_pred):
     preds  = np.argmax(eval_pred[0], axis=-1)
@@ -152,10 +110,6 @@ def _print_split_stats(name, rows):
     print(f"  {name:6s}: {len(rows):7d} sentences  "
           f"({n_pos} premises / {n_neg} non-premises)")
 
-
-# ---------------------------------------------------------------------------
-# Fine-tune workflow
-# ---------------------------------------------------------------------------
 
 def prepare_data():
     """Load dataset, apply fact negatives, split, and balance."""

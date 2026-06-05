@@ -1,14 +1,3 @@
-"""
-Similarity-filtered factual negatives for LegalBERT fine-tuning.
-
-For each case in all-data/, embeds premise sentences (Applicant/State arguments)
-and facts_section sentences with all-mpnet-base-v2. Fact sentences whose max
-cosine similarity to any premise in the same case falls below FACT_SIM_THRESHOLD
-are kept as safe NON_PREMISE training examples.
-
-This teaches LegalBERT that factual background text CAN be non-premise, without
-introducing contradictory labels for legally relevant facts.
-"""
 import json
 import re
 from pathlib import Path
@@ -31,9 +20,6 @@ def _flatten_facts(node: dict) -> list[str]:
 
 
 def _load_premises_and_facts(dataset_dir: Path, excluded: set) -> dict:
-    """
-    Returns case_id -> {"premises": [str], "facts": [str]}
-    """
     cases: dict[str, dict] = {}
 
     for path in dataset_dir.glob("*.json"):
@@ -74,10 +60,6 @@ def filter_fact_negatives(
     excluded: set = None,
     batch_size: int = 256,
 ) -> dict[str, list[str]]:
-    """
-    Returns case_id -> list of safe fact sentences (similarity < threshold).
-    Caches result to disk; loads from cache if it exists.
-    """
     if cache_path.exists():
         print(f"  Loading cached fact negatives from {cache_path}")
         with open(cache_path, "r", encoding="utf-8") as f:
@@ -137,9 +119,6 @@ def inspect_fact_negatives(
     n_cases: int = 3,
     n_sentences: int = 5,
 ):
-    """
-    Print sample kept and filtered sentences for manual review.
-    """
     from stage1_argument_mining.fact_filter import _load_premises_and_facts
 
     excluded = set()
