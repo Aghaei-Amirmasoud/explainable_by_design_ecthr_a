@@ -35,7 +35,6 @@ NLPPW/
 ├── config.py                              # All hyperparameters and paths
 ├── run_pipeline.py                        # Main entry point (stages 1+2+eval)
 ├── check_contamination.py                 # LexGLUE vs all-data/ fingerprint check
-├── visualize.py                           # Visualization utilities
 │
 ├── all-data/                              # 12,500+ annotated JSON files (case, article pairs)
 ├── echr_corpus/ECHR_Corpus.json          # Legacy 42-doc Poudyal dataset
@@ -182,37 +181,6 @@ python run_pipeline.py --force
 
 ---
 
-## Key Configuration (`config.py`)
-
-```python
-# Stage 1 (Argument Mining)
-LEGALBERT_MODEL        = "outputs/stage1_legalbert/checkpoint-best"
-PREMISE_THRESHOLD      = 0.75        # fixed threshold (if dynamic disabled)
-DYNAMIC_TOPK           = True        # adaptive per-paragraph threshold
-DYNAMIC_TOPK_ALPHA     = 0.5         # mean + alpha*std
-PREMISE_FLOOR          = 0.50        # minimum viable score
-FACT_NEGATIVES         = True        # similarity-filtered factual negatives
-FACT_SIM_THRESHOLD     = 0.6         # max cosine sim → safe NON_PREMISE
-
-# Stage 2 (Outcome Prediction)
-SENTENCE_TRANSFORMER   = "all-mpnet-base-v2"
-POOLING_STRATEGY       = "concat"    # max, mean, weighted_mean, concat
-CLASSIFIER_TYPE        = "svm"       # only SVM is supported
-
-# Hybrid Experiment
-USE_HYBRID_EMBEDDER          = False  # enable hybrid approach
-HYBRID_PREMISE_WEIGHT_BOOST  = 2.0    # weight multiplier for premise paragraphs
-
-# SVM Settings
-SVM_C                  = 1.0
-SVM_MAX_ITER           = 2000
-
-# General
-RANDOM_SEED            = 42
-```
-
----
-
 ## Datasets
 
 | Source | Used for |
@@ -260,13 +228,6 @@ RANDOM_SEED            = 42
 ---
 
 ## Notebooks
-
-Both notebooks include:
-- Stage 1 fine-tuning with similarity-filtered factual negatives
-- Stage 2 classical ML (premise + hybrid) with three-way evaluation
-- LegalBERT comparison (full-text vs premises vs hybrid with markers)
-- Premise count analysis for both classical ML and BERT
-- Qualitative review and demo inference
 
 **Notebooks:**
 - **`colab_pipeline.ipynb`**: Google Colab end-to-end pipeline (T4 GPU recommended)
