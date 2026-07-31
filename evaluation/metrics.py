@@ -73,15 +73,43 @@ def print_per_article_f1(results, top_n=15):
 
 
 def train_baseline_classifier(stage1_train, stage1_test, embedder):
+    """Train baseline classifier using full text with paragraph-level embedding.
+
+    Embeds each paragraph individually (avoiding truncation), then pools them
+    using the same mechanism as premise-only for fair comparison.
+    """
     from stage2_outcome_prediction.classifier import train_classifier, predict
 
-    def full_text(cases):
-        return [{**c, "premise_text": " ".join(c["paragraphs"])} for c in cases]
+    def paragraphs_as_premises(cases):
+        """Convert paragraphs to premise format for fair paragraph-level embedding.
 
-    X_train = embedder.embed_cases(full_text(stage1_train))
-    y_train = embedder.extract_labels(stage1_train)
-    X_test  = embedder.embed_cases(full_text(stage1_test))
+        This ensures baseline doesn't suffer from truncation bias:
+        - Each paragraph embedded separately (no 384-token truncation)
+        - Pooled using same concatenated pooling as premise-only
+        - Fair comparison across all approaches
+        """
+        baseline_cases = []
+        for case in cases:
+            # Treat each paragraph as a "premise" so they get embedded individually
+            fake_premises = [
+                {
+                    "sentence": para,
+                    "confidence": 1.0,  # Equal weight for all paragraphs
+                    "paragraph_id": i,
+                    "sentence_id": 0
+                }
+                for i, para in enumerate(case.get("paragraphs", []))
+            ]
+            baseline_cases.append({
+                **case,
+                "premises": fake_premises
+            })
+        return baseline_cases
 
-    clf    = train_classifier(X_train, y_train)
+    # Use same prepare_split mechanism as premise-only (fair comparison)
+    X_train, y_train = embedder.prepare_split(paragraphs_as_premises(stage1_train))
+    X_test, y_test = embedder.prepare_split(paragraphs_as_premises(stage1_test))
+
+    clf = train_classifier(X_train, y_train)
     y_pred = predict(clf, X_test)
     return y_pred, clf
