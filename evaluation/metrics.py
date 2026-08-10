@@ -72,13 +72,19 @@ def print_per_article_f1(results, top_n=15):
     print(f"{'─' * 45}")
 
 
-def train_baseline_classifier(stage1_train, stage1_test, embedder):
+def train_baseline_classifier(stage1_train, stage1_test, embedder, stage1_val=None):
     """Train baseline classifier using full text with paragraph-level embedding.
 
     Embeds each paragraph individually (avoiding truncation), then pools them
     using the same mechanism as premise-only for fair comparison.
+
+    Pass `stage1_val` to tune per-article thresholds on the validation split,
+    matching what the premise and hybrid classifiers do. Without it the baseline
+    is evaluated at the default decision boundary (0) while its competitors are
+    threshold-tuned, which understates the baseline.
     """
-    from stage2_outcome_prediction.classifier import train_classifier, predict
+    from stage2_outcome_prediction.classifier import (
+        train_classifier, predict, tune_thresholds, predict_with_thresholds)
 
     def paragraphs_as_premises(cases):
         """Convert paragraphs to premise format for fair paragraph-level embedding.
@@ -111,5 +117,11 @@ def train_baseline_classifier(stage1_train, stage1_test, embedder):
     X_test, y_test = embedder.prepare_split(paragraphs_as_premises(stage1_test))
 
     clf = train_classifier(X_train, y_train)
-    y_pred = predict(clf, X_test)
+
+    if stage1_val is not None:
+        X_val, y_val = embedder.prepare_split(paragraphs_as_premises(stage1_val))
+        thresholds = tune_thresholds(clf, X_val, y_val)
+        y_pred = predict_with_thresholds(clf, X_test, thresholds)
+    else:
+        y_pred = predict(clf, X_test)
     return y_pred, clf
