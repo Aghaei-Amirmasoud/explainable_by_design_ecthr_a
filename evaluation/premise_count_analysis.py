@@ -4,16 +4,17 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-def group_cases_by_premise_count(cases, predictions_dict):
+def group_cases_by_premise_count(cases, predictions_dict, bins=None):
     # Define bins
-    bins = [
-        ('0', 0, 0),
-        ('1', 1, 1),
-        ('2', 2, 2),
-        ('3-5', 3, 5),
-        ('6-10', 6, 10),
-        ('10+', 11, 999)
-    ]
+    if bins is None:
+        bins = [
+            ('0', 0, 0),
+            ('1', 1, 1),
+            ('2', 2, 2),
+            ('3-5', 3, 5),
+            ('6-10', 6, 10),
+            ('10+', 11, 999)
+        ]
 
     results = {
         'bins': [b[0] for b in bins],

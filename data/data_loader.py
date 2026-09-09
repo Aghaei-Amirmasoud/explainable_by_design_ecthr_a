@@ -1,5 +1,8 @@
-from datasets import load_dataset
 import config
+
+# `datasets` is imported lazily inside get_dataset(): importing it at module level
+# drags in pyarrow, and anything that only needs ARTICLE_NAMES (e.g. evaluation.metrics,
+# run_seed_study.py) would then break on an env with a mismatched pyarrow/datasets pair.
 
 ARTICLE_NAMES = [
     "Article 2",  "Article 3",  "Article 5",  "Article 6",
@@ -26,6 +29,7 @@ def get_dataset(max_train=config.MAX_TRAIN_SAMPLES,
                 max_val=config.MAX_VAL_SAMPLES,
                 max_test=config.MAX_TEST_SAMPLES):
     """Load ECtHR dataset with binary labels and paragraph fields."""
+    from datasets import load_dataset
     ds = load_dataset(config.LEXGLUE_DATASET, config.LEXGLUE_CONFIG, trust_remote_code=True)
 
     # Limit dataset splits
