@@ -296,6 +296,14 @@ Delete a cache file to rebuild it from scratch.
   publisher = {Association for Computational Linguistics},
 }
 
+@misc{azminajid-echrargs,
+  author = {azminajid},
+  title  = {{ECHR} Arguments Dataset},
+  year   = {2024},
+  url    = {https://github.com/azminajid/echr-args-dataset},
+  note   = {GitHub repository. Original annotation provenance unknown.}
+}
+
 @inproceedings{poudyal-etal-2020-echr,
   title     = {{ECHR}: Legal Corpus for Argument Mining},
   author    = {Poudyal, Prakash and Savelka, Jaromir and Ieven, Aagje and
@@ -304,6 +312,7 @@ Delete a cache file to rebuild it from scratch.
   year      = {2020},
   pages     = {67--75},
   publisher = {Association for Computational Linguistics},
+  note      = {Legacy 42-document corpus (echr\_corpus/); superseded by azminajid-echrargs for Stage 1 fine-tuning.}
 }
 
 @article{pedregosa-etal-2011-sklearn,
