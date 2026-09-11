@@ -1,0 +1,14 @@
+{
+  "k": 3,
+  "n_pairs": 1180,
+  "comprehensiveness_top": 0.21450863475200796,
+  "comprehensiveness_rand": 0.04829198354556184,
+  "sufficiency_top": -0.31287297649386425,
+  "sufficiency_rand": 0.41144740740068014,
+  "flip_rate_top": 0.2135593220338983,
+  "flip_rate_rand": 0.09830508474576272,
+  "retained_top": 0.8627118644067797,
+  "retained_rand": 0.6084745762711864,
+  "comprehensiveness_gain": 0.16621665120644613,
+  "sufficiency_gain": 0.7243203838945445
+}

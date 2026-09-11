@@ -1,0 +1,672 @@
+{
+  "random_s0": {
+    "macro_f1": 0.49349572986109164,
+    "micro_f1": 0.5840241145440844,
+    "macro_precision": 0.4613967744909048,
+    "macro_recall": 0.5394208608906111,
+    "micro_precision": 0.5492558469170801,
+    "micro_recall": 0.6234915526950925,
+    "hamming_loss": 0.10036363636363636,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7429,
+        "support": 189
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.7207,
+        "support": 56
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.6493,
+        "support": 166
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.6452,
+        "support": 37
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.637,
+        "support": 122
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6354,
+        "support": 299
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.5419,
+        "support": 77
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.4752,
+        "support": 123
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.2231,
+        "support": 153
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.1579,
+        "support": 16
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.0,
+        "support": 5
+      }
+    ],
+    "condition": "random"
+  },
+  "random_s1": {
+    "macro_f1": 0.5152895908355624,
+    "micro_f1": 0.5970496894409938,
+    "macro_precision": 0.487235633424084,
+    "macro_recall": 0.5522773396337647,
+    "micro_precision": 0.5768942235558889,
+    "micro_recall": 0.6186645213193885,
+    "hamming_loss": 0.09436363636363636,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7781,
+        "support": 189
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.7119,
+        "support": 56
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.6859,
+        "support": 166
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6591,
+        "support": 122
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6073,
+        "support": 299
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.5926,
+        "support": 37
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.573,
+        "support": 77
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.542,
+        "support": 123
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.2791,
+        "support": 153
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.125,
+        "support": 5
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.1143,
+        "support": 16
+      }
+    ],
+    "condition": "random"
+  },
+  "random_s2": {
+    "macro_f1": 0.47685079063460695,
+    "micro_f1": 0.5637829912023461,
+    "macro_precision": 0.446362397974255,
+    "macro_recall": 0.5347248687307703,
+    "micro_precision": 0.5178451178451179,
+    "micro_recall": 0.6186645213193885,
+    "hamming_loss": 0.10818181818181818,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7632,
+        "support": 189
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.6506,
+        "support": 37
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.6441,
+        "support": 56
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6328,
+        "support": 299
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6148,
+        "support": 122
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.586,
+        "support": 166
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.4865,
+        "support": 77
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.4237,
+        "support": 123
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.1586,
+        "support": 153
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.1538,
+        "support": 5
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.1311,
+        "support": 16
+      }
+    ],
+    "condition": "random"
+  },
+  "random_s3": {
+    "macro_f1": 0.5004934755684752,
+    "micro_f1": 0.5859872611464968,
+    "macro_precision": 0.4831957804084934,
+    "macro_recall": 0.5367973478764756,
+    "micro_precision": 0.5483870967741935,
+    "micro_recall": 0.6291230893000804,
+    "hamming_loss": 0.10045454545454545,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7579,
+        "support": 189
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.6935,
+        "support": 56
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6736,
+        "support": 122
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.625,
+        "support": 37
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.6241,
+        "support": 166
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6206,
+        "support": 299
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.4896,
+        "support": 123
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.4545,
+        "support": 77
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.3704,
+        "support": 16
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.1961,
+        "support": 153
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.0,
+        "support": 5
+      }
+    ],
+    "condition": "random"
+  },
+  "random_s4": {
+    "macro_f1": 0.5176831697728795,
+    "micro_f1": 0.5829259119969914,
+    "macro_precision": 0.4936981791260299,
+    "macro_recall": 0.5586528005305987,
+    "micro_precision": 0.547316384180791,
+    "micro_recall": 0.6234915526950925,
+    "hamming_loss": 0.10081818181818182,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7426,
+        "support": 189
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.6972,
+        "support": 56
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6846,
+        "support": 122
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.6813,
+        "support": 37
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6471,
+        "support": 299
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.6115,
+        "support": 166
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.48,
+        "support": 77
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.428,
+        "support": 123
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.3571,
+        "support": 16
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.2222,
+        "support": 153
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.1429,
+        "support": 5
+      }
+    ],
+    "condition": "random"
+  },
+  "complement_s0": {
+    "macro_f1": 0.5156533760743065,
+    "micro_f1": 0.5812163202463433,
+    "macro_precision": 0.4910009824434566,
+    "macro_recall": 0.5507281620126215,
+    "micro_precision": 0.5571955719557196,
+    "micro_recall": 0.6074014481094127,
+    "hamming_loss": 0.0989090909090909,
+    "per_article": [
+      {
+        "article": "Article 5",
+        "f1": 0.6982,
+        "support": 166
+      },
+      {
+        "article": "Article 3",
+        "f1": 0.6946,
+        "support": 189
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.6723,
+        "support": 56
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.6486,
+        "support": 37
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6452,
+        "support": 122
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6281,
+        "support": 299
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.5399,
+        "support": 77
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.4769,
+        "support": 123
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.2857,
+        "support": 5
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.2345,
+        "support": 153
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.1481,
+        "support": 16
+      }
+    ],
+    "condition": "complement"
+  },
+  "complement_s1": {
+    "macro_f1": 0.5011322465738935,
+    "micro_f1": 0.5590304925723222,
+    "macro_precision": 0.4932336017945028,
+    "macro_recall": 0.5496334349125124,
+    "micro_precision": 0.5437262357414449,
+    "micro_recall": 0.5752212389380531,
+    "hamming_loss": 0.10254545454545455,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7202,
+        "support": 189
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6493,
+        "support": 122
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.6377,
+        "support": 166
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.6337,
+        "support": 56
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.6234,
+        "support": 37
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6162,
+        "support": 299
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.4898,
+        "support": 123
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.4427,
+        "support": 77
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.2778,
+        "support": 16
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.2453,
+        "support": 153
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.1765,
+        "support": 5
+      }
+    ],
+    "condition": "complement"
+  },
+  "complement_s2": {
+    "macro_f1": 0.5412809912465376,
+    "micro_f1": 0.5997770345596433,
+    "macro_precision": 0.4946722388199506,
+    "macro_recall": 0.617731421085982,
+    "micro_precision": 0.5573204419889503,
+    "micro_recall": 0.6492357200321802,
+    "hamming_loss": 0.0979090909090909,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7347,
+        "support": 189
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.7229,
+        "support": 37
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.7154,
+        "support": 56
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.6685,
+        "support": 166
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6465,
+        "support": 122
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6461,
+        "support": 299
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.525,
+        "support": 77
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.5,
+        "support": 123
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.3529,
+        "support": 5
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.2469,
+        "support": 153
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.1951,
+        "support": 16
+      }
+    ],
+    "condition": "complement"
+  },
+  "complement_s3": {
+    "macro_f1": 0.524195598853381,
+    "micro_f1": 0.6013564431047476,
+    "macro_precision": 0.491326204170682,
+    "macro_recall": 0.5970574142424416,
+    "micro_precision": 0.5655563430191354,
+    "micro_recall": 0.6419951729686243,
+    "hamming_loss": 0.09618181818181819,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7585,
+        "support": 189
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.6897,
+        "support": 56
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6573,
+        "support": 299
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.6549,
+        "support": 166
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6498,
+        "support": 122
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.6304,
+        "support": 37
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.5379,
+        "support": 77
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.4906,
+        "support": 123
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.303,
+        "support": 16
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.2888,
+        "support": 153
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.1053,
+        "support": 5
+      }
+    ],
+    "condition": "complement"
+  },
+  "complement_s4": {
+    "macro_f1": 0.5251303594442704,
+    "micro_f1": 0.586046511627907,
+    "macro_precision": 0.5157342958492154,
+    "macro_recall": 0.576716259935298,
+    "micro_precision": 0.5654450261780105,
+    "micro_recall": 0.6082059533386966,
+    "hamming_loss": 0.09709090909090909,
+    "per_article": [
+      {
+        "article": "Article 3",
+        "f1": 0.7462,
+        "support": 189
+      },
+      {
+        "article": "P1-1",
+        "f1": 0.6931,
+        "support": 122
+      },
+      {
+        "article": "Article 2",
+        "f1": 0.6531,
+        "support": 56
+      },
+      {
+        "article": "Article 6",
+        "f1": 0.6358,
+        "support": 299
+      },
+      {
+        "article": "Article 5",
+        "f1": 0.6132,
+        "support": 166
+      },
+      {
+        "article": "Article 11",
+        "f1": 0.5714,
+        "support": 37
+      },
+      {
+        "article": "Article 8",
+        "f1": 0.5,
+        "support": 123
+      },
+      {
+        "article": "Article 10",
+        "f1": 0.4969,
+        "support": 77
+      },
+      {
+        "article": "Article 9",
+        "f1": 0.381,
+        "support": 5
+      },
+      {
+        "article": "No Violation",
+        "f1": 0.2971,
+        "support": 153
+      },
+      {
+        "article": "Article 14",
+        "f1": 0.1887,
+        "support": 16
+      }
+    ],
+    "condition": "complement"
+  }
+}
