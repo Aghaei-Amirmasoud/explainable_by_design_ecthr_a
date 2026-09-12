@@ -1,14 +1,3 @@
-"""
-Contamination check: all-data/ (12,947 cases) vs LexGLUE ecthr_a test+val splits.
-
-Fingerprint-based matching checks BOTH input_arguments AND facts_section,
-since both are used as training data (PREMISE and NON_PREMISE respectively).
-
-Run:
-    python check_contamination.py
-
-Set config.NEW_DATASET_DIR to the folder containing the dataset JSON files.
-"""
 import json
 import re
 import config
@@ -16,10 +5,7 @@ from pathlib import Path
 from datasets import load_dataset
 
 
-# ---------------------------------------------------------------------------
 # 1. Load lex_glue/ecthr_a test + validation splits
-# ---------------------------------------------------------------------------
-
 print(f"Loading {config.LEXGLUE_DATASET}/{config.LEXGLUE_CONFIG} test + validation splits...")
 ds = load_dataset(config.LEXGLUE_DATASET, config.LEXGLUE_CONFIG, trust_remote_code=True)
 test_split = ds["test"]
@@ -27,10 +13,7 @@ val_split = ds["validation"]
 print(f"  {len(test_split)} test cases + {len(val_split)} validation cases loaded")
 
 
-# ---------------------------------------------------------------------------
 # 2. Build paragraph fingerprint set from LexGLUE test + validation
-# ---------------------------------------------------------------------------
-
 def fingerprint(text: str) -> str:
     """Normalize whitespace, lowercase, take first 80 chars."""
     return re.sub(r"\s+", " ", text.lower().strip())[:500]
@@ -57,10 +40,8 @@ for example in list(test_split) + list(val_split):
 print(f"  {len(test_fingerprints)} unique paragraph fingerprints indexed")
 
 
-# ---------------------------------------------------------------------------
-# 3. Scan all-data/ and check against fingerprints
-# ---------------------------------------------------------------------------
 
+# 3. Scan all-data/ and check against fingerprints
 new_dataset_dir = config.NEW_DATASET_DIR
 contaminated_new: list[dict] = []
 clean_count = 0
@@ -113,10 +94,8 @@ for path in json_files:
         clean_count += 1
 
 
-# ---------------------------------------------------------------------------
-# 4. Report results
-# ---------------------------------------------------------------------------
 
+# 4. Report results
 total = len(json_files)
 print("\n" + "=" * 60)
 if not contaminated_new:

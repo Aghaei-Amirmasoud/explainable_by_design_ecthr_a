@@ -13,9 +13,6 @@ def _cosine_similarity(a, b):
 
 
 def attribute_premises_svm(x, svm, premise_embeddings, top_k=3):
-    """Attribution via SVM weight vector: project each premise onto the
-    classifier's decision hyperplane to measure how much it 'pushes'
-    the prediction toward violation."""
     if len(premise_embeddings) == 0:
         return []
     w = svm.coef_[0]

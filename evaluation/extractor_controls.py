@@ -1,25 +1,3 @@
-"""Matched-budget controls: is Stage 1 selecting *signal*, or just selecting *less text*?
-
-Premises-only keeps ~16% of the words and loses ~0.06-0.07 macro F1. That is
-consistent with two very different stories:
-
-  (a) the extractor finds the legally decisive sentences, so little is lost;
-  (b) the task is redundant enough that ANY 16% of the text scores about the same.
-
-Separating them needs controls that hold the token budget fixed and vary only
-*which* sentences are kept:
-
-  premises    the extractor's own selection (the condition under test)
-  complement  sentences the extractor REJECTED, same word budget
-              -> the sharpest control. If premises >> complement, the extractor
-                 selects signal rather than merely selecting text.
-  random      random sentences, same word budget
-              -> isolates compression cost from selection quality.
-  lead        the first sentences, same word budget
-              -> position-bias control (ECtHR facts run roughly chronologically).
-
-The SVM is deterministic, so one run per condition is enough - no seed study.
-"""
 import json
 import random
 from pathlib import Path
@@ -33,12 +11,9 @@ CONDITIONS = ("premises", "complement", "random", "lead")
 RESULTS_PATH = config.OUTPUT_DIR / "extractor_controls.json"
 
 
-# ---------------------------------------------------------------------------
 # Building the variants
-# ---------------------------------------------------------------------------
 
 def case_sentences(case):
-    """Re-split a case into (paragraph_id, sentence_id, text), matching Stage 1."""
     out = []
     for pid, para in enumerate(case.get("paragraphs", [])):
         for sid, sent in enumerate(_split_sentences(para)):
@@ -47,13 +22,6 @@ def case_sentences(case):
 
 
 def build_variant(case, condition, rng):
-    """Return a `premises`-shaped list for one case under one condition.
-
-    Matched on WORD BUDGET: a control keeps adding sentences until it reaches the
-    word count of the real premise set. Cases where Stage 1 found nothing keep
-    their empty list, so the full-text fallback fires identically in every
-    condition and cannot differentiate them.
-    """
     premises = case.get("premises", [])
     if not premises or condition == "premises":
         return premises
@@ -93,7 +61,6 @@ def apply_condition(cases, condition, seed=0):
 
 
 def budget_report(cases, conditions=CONDITIONS, seed=0):
-    """Confirm the controls really are matched on size."""
     print(f"  {'condition':<12} {'median words':>13} {'median sents':>13}")
     print("  " + "-" * 40)
     for cond in conditions:
@@ -106,12 +73,8 @@ def budget_report(cases, conditions=CONDITIONS, seed=0):
     print(f"  {'(full text)':<12} {full:>13.0f}")
 
 
-# ---------------------------------------------------------------------------
 # Running one condition through the SVM pipeline
-# ---------------------------------------------------------------------------
-
 def run_condition(condition, stage1, embedder, seed=0):
-    """Embed + train + tune thresholds + evaluate. Returns a metrics dict."""
     from stage2_outcome_prediction.classifier import (
         train_classifier, tune_thresholds, predict_with_thresholds)
     from evaluation.metrics import compute_metrics, per_article_f1
@@ -149,7 +112,6 @@ def save_results(results, path=RESULTS_PATH):
 
 def run_all(stage1, embedder, conditions=CONDITIONS, seed=0, force=False,
             path=RESULTS_PATH):
-    """Run each condition, caching to disk so the cell is resumable."""
     results = {} if force else load_results(path)
     for cond in conditions:
         if cond in results:
@@ -164,9 +126,7 @@ def run_all(stage1, embedder, conditions=CONDITIONS, seed=0, force=False,
     return results
 
 
-# ---------------------------------------------------------------------------
 # Reporting
-# ---------------------------------------------------------------------------
 
 def print_report(results, conditions=CONDITIONS):
     have = [c for c in conditions if c in results]

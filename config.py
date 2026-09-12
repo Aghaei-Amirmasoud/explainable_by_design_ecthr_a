@@ -21,7 +21,7 @@ if HF_TOKEN:
 OUTPUT_DIR = ROOT_DIR / "outputs"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-STAGE1_CACHE = OUTPUT_DIR / "stage1_extracted_premises.json"
+STAGE1_CACHE = OUTPUT_DIR / "stage1_extracted_premises_thr090.json"
 STAGE2_CACHE = OUTPUT_DIR / "stage2_embeddings.npy"
 MODEL_CACHE  = OUTPUT_DIR / "stage2_classifier.joblib"
 
@@ -45,13 +45,7 @@ S1_EPOCHS      = 3
 S1_BATCH_SIZE  = 32
 S1_LR          = 2e-5
 S1_MAX_SEQ_LEN = 512
-PREMISE_THRESHOLD = 0.75
-
-DYNAMIC_TOPK       = True
-DYNAMIC_TOPK_ALPHA = 0.5
-DYNAMIC_TOPK_MIN   = 1
-DYNAMIC_TOPK_MAX   = 10
-PREMISE_FLOOR      = 0.50
+PREMISE_THRESHOLD = 0.90
 
 FACT_NEGATIVES          = True
 FACT_SIM_THRESHOLD      = 0.6

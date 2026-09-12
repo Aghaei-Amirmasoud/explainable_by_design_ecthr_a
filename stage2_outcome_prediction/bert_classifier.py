@@ -25,9 +25,7 @@ HIER_SEG_LEN  = 128
 HIER_MAX_SEGS = 64
 
 
-# ---------------------------------------------------------------------------
 # Text extraction helpers
-# ---------------------------------------------------------------------------
 
 def _extract_texts(cases, use_premises, use_hybrid=False):
     texts = []
@@ -51,12 +49,9 @@ def _extract_texts(cases, use_premises, use_hybrid=False):
     return texts
 
 
-# ---------------------------------------------------------------------------
 # Datasets
-# ---------------------------------------------------------------------------
 
 class CaseTextDataset(Dataset):
-    """Flat dataset: single truncated sequence per case (512 tokens)."""
 
     def __init__(self, texts, labels, tokenizer, max_len=512):
         self.texts     = texts
@@ -88,7 +83,6 @@ class HierarchicalCaseDataset(Dataset):
     Matches LexGLUE protocol: 64 segments × 128 tokens = 8,192 token capacity.
     Each segment gets its own [CLS]/[SEP] so BERT processes it independently.
     """
-
     def __init__(self, texts, labels, tokenizer,
                  seg_len=HIER_SEG_LEN, max_segs=HIER_MAX_SEGS):
         self.labels    = labels
@@ -136,9 +130,7 @@ class HierarchicalCaseDataset(Dataset):
         }
 
 
-# ---------------------------------------------------------------------------
 # Hierarchical model wrapper (matches LexGLUE hierbert.py)
-# ---------------------------------------------------------------------------
 
 class SinusoidalPositionalEncoding(nn.Module):
     """Sinusoidal positional embeddings with padding_idx=0 (matches LexGLUE)."""
@@ -254,9 +246,7 @@ class HierarchicalBertClassifier(nn.Module):
         return ModelOutput(loss=loss, logits=logits)
 
 
-# ---------------------------------------------------------------------------
 # Training
-# ---------------------------------------------------------------------------
 
 def train_bert_classifier(train_cases, val_cases,
                            use_premises=True, use_hybrid=False,
@@ -277,16 +267,7 @@ def train_bert_classifier(train_cases, val_cases,
                            seg_chunk_size=16,
                            seed=None,
                            checkpoint_dir=None):
-    """Train LegalBERT classifier (single GPU).
 
-    use_hierarchical=True  -> 64x128-token hierarchical encoding (LexGLUE protocol)
-    use_hierarchical=False -> single 512-token truncated sequence (legacy)
-
-    `seed` controls classifier-head init and batch shuffling (same as LexGLUE's
-    `--seed`). cuDNN kernels stay nondeterministic, so runs are not bit-identical,
-    but the seed is what varies across a multi-seed study. seed=None leaves the
-    global RNG untouched (legacy behaviour, not reproducible).
-    """
     if model_name is None:
         model_name = "nlpaueb/bert-base-uncased-echr"
 
@@ -405,34 +386,17 @@ def train_bert_classifier(train_cases, val_cases,
     return model, tokenizer
 
 
-# ---------------------------------------------------------------------------
 # Checkpointing
-# ---------------------------------------------------------------------------
 
 def bert_checkpoint_exists(name, base_dir=BERT_MODEL_DIR):
-    """True only for a run that finished.
-
-    `train_meta.json` is written last, after training completes, so a run killed
-    mid-training leaves weights behind but is still reported as not-done. Without
-    this a crashed 160-minute run would silently masquerade as a finished one.
-    """
     d = Path(base_dir) / name
     return (d / "pytorch_model.bin").exists() and (d / "train_meta.json").exists()
 
 
 def bert_checkpoint_partial(name, base_dir=BERT_MODEL_DIR):
-    """Weights from an interrupted run: best-so-far, but training never finished."""
     d = Path(base_dir) / name
     return (d / "pytorch_model.bin").exists() and not (d / "train_meta.json").exists()
 
-
-# ---------------------------------------------------------------------------
-# Result persistence  (metrics + test predictions, no model weights)
-#
-# A run costs hours; its *result* is a few KB. Keeping them separate means the
-# aggregate/analysis cells reload instantly after a kernel restart and never
-# need to touch the multi-hundred-MB checkpoints.
-# ---------------------------------------------------------------------------
 
 def _json_default(o):
     if isinstance(o, np.integer):
@@ -469,7 +433,6 @@ def save_bert_result(name, metrics, y_pred, meta=None, base_dir=BERT_MODEL_DIR):
 
 
 def load_bert_result(name, base_dir=BERT_MODEL_DIR):
-    """Return (metrics_dict, y_pred) for a finished run, without loading weights."""
     d       = json.loads(bert_result_path(name, base_dir).read_text())
     res     = dict(d["metrics"])
     res["per_article"]     = d.get("per_article")
@@ -480,7 +443,6 @@ def load_bert_result(name, base_dir=BERT_MODEL_DIR):
 
 
 def list_bert_runs(base_dir=BERT_MODEL_DIR):
-    """Status of every run on disk: result cached / weights present / interrupted."""
     base  = Path(base_dir)
     names = sorted({p.name for p in base.iterdir() if p.is_dir() and p.name != "_results"}
                    | {p.stem for p in (base / "_results").glob("*.json")}
@@ -514,11 +476,6 @@ def save_bert_model(model, tokenizer, name, meta, base_dir=BERT_MODEL_DIR):
 
 
 def load_bert_model(name, base_dir=BERT_MODEL_DIR, device=None):
-    """Rebuild architecture from train_meta.json and load the saved weights.
-
-    Returns (model, tokenizer, meta). `meta` carries use_premises / use_hybrid /
-    use_hierarchical so evaluation reproduces the same text extraction.
-    """
     d      = Path(base_dir) / name
     meta   = json.loads((d / "train_meta.json").read_text())
     device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -546,11 +503,6 @@ def load_bert_model(name, base_dir=BERT_MODEL_DIR, device=None):
 
 def train_or_load_bert(name, train_cases, val_cases, force=False,
                        base_dir=BERT_MODEL_DIR, model_name=None, **kw):
-    """Load `name` from disk if present, otherwise train it and save.
-
-    Mirrors the Stage 1 checkpoint pattern: delete the folder to retrain.
-    Returns (model, tokenizer, meta).
-    """
     if not force and bert_checkpoint_exists(name, base_dir):
         return load_bert_model(name, base_dir)
 
@@ -584,9 +536,7 @@ def train_or_load_bert(name, train_cases, val_cases, force=False,
     return model, tokenizer, meta
 
 
-# ---------------------------------------------------------------------------
 # Evaluation helpers
-# ---------------------------------------------------------------------------
 
 def _evaluate(model, dataloader, device):
     model.eval()

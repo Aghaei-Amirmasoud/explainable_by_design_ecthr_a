@@ -112,7 +112,6 @@ def _print_split_stats(name, rows):
 
 
 def prepare_data():
-    """Load dataset, apply fact negatives, split, and balance."""
     excluded = _load_exclusion_list()
     if excluded:
         print(f"  Excluding {len(excluded)} contaminated case_id(s).")

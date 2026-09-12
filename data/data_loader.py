@@ -1,9 +1,5 @@
 import config
 
-# `datasets` is imported lazily inside get_dataset(): importing it at module level
-# drags in pyarrow, and anything that only needs ARTICLE_NAMES (e.g. evaluation.metrics,
-# run_seed_study.py) would then break on an env with a mismatched pyarrow/datasets pair.
-
 ARTICLE_NAMES = [
     "Article 2",  "Article 3",  "Article 5",  "Article 6",
     "Article 8",  "Article 9",  "Article 10", "Article 11",

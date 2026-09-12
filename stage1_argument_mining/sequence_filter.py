@@ -25,7 +25,6 @@ def filter_dataset_split(split, extractor, split_name="split"):
 
 
 def run_stage1(dataset, extractor=None, save_path=config.STAGE1_CACHE):
-    """Run Stage 1 argument mining on the dataset."""
     if extractor is None:
         extractor = LegalBERTArgumentExtractor()
 
@@ -40,7 +39,6 @@ def run_stage1(dataset, extractor=None, save_path=config.STAGE1_CACHE):
 
 
 def load_stage1(path=config.STAGE1_CACHE):
-    """Load cached Stage 1 results from disk."""
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 

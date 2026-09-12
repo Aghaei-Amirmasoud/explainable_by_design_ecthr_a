@@ -1,26 +1,3 @@
-"""Faithfulness of the premise attributions (ERASER comprehensiveness / sufficiency).
-
-`traceback.py` names the premises that supposedly drove a prediction. Nothing so
-far tests whether that is true. These metrics do:
-
-  comprehensiveness = margin(full) - margin(full MINUS rationale)
-      How much does the prediction rely on the cited premises? If removing them
-      barely moves the margin, they were not what drove it.  HIGHER is better.
-
-  sufficiency       = margin(full) - margin(rationale ONLY)
-      Do the cited premises carry the prediction on their own? If the margin
-      collapses without the rest, they were not sufficient.  LOWER (nearer 0)
-      is better.
-
-Both are meaningless in isolation: removing *any* k premises moves the margin
-somewhat. So every metric is also computed for a RANDOM rationale of the same
-size, and what matters is the gap. Same logic as the matched-budget controls in
-`extractor_controls.py`.
-
-Margins come from `LinearSVC.decision_function`, so they are signed distances to
-the hyperplane, not probabilities. Deltas are comparable within an article; the
-flip rate is the scale-free summary.
-"""
 import numpy as np
 
 from stage2_outcome_prediction.traceback import (
@@ -28,7 +5,6 @@ from stage2_outcome_prediction.traceback import (
 
 
 def _subset_case(case, keep_idx):
-    """A copy of `case` whose premises are restricted to `keep_idx` (in order)."""
     prem = case.get("premises", [])
     return {**case, "premises": [prem[i] for i in sorted(keep_idx)]}
 
@@ -38,13 +14,6 @@ def _margins(clf, X, label_idx):
 
 
 def build_rationales(cases, X, clf, embedder, k=3, seed=0, max_cases=None):
-    """For every (case, predicted-positive article), pick the top-k attributed
-    premises and a random k of the same size.
-
-    Returns a list of jobs: dicts with case index, label index, and the two
-    index sets. Cases with <= k premises are skipped - there is nothing to
-    ablate and the two conditions would be identical.
-    """
     rng = np.random.default_rng(seed)
     jobs = []
     n = len(cases) if max_cases is None else min(len(cases), max_cases)
@@ -64,9 +33,6 @@ def build_rationales(cases, X, clf, embedder, k=3, seed=0, max_cases=None):
         for j in np.flatnonzero(y_pred):
             ranked = attribute_premises_svm(X[ci], clf.estimators_[j], prem_embs, top_k=k)
             top = [i for i, _ in ranked]
-            # traceback only surfaces positively-contributing premises, so it may
-            # return fewer than k. Evaluate the explanation as actually shown, and
-            # size the random control to match it.
             if not top:
                 continue
             rand = list(rng.choice(len(prem), size=len(top), replace=False))
@@ -76,7 +42,6 @@ def build_rationales(cases, X, clf, embedder, k=3, seed=0, max_cases=None):
 
 
 def evaluate(cases, X, clf, embedder, k=3, seed=0, max_cases=None, verbose=True):
-    """Comprehensiveness and sufficiency for top-k vs random-k rationales."""
     jobs = build_rationales(cases, X, clf, embedder, k, seed, max_cases)
     if not jobs:
         raise ValueError("no eligible (case, article) pairs")
