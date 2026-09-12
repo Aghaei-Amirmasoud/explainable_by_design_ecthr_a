@@ -54,14 +54,3 @@ def print_stage1_stats(output):
         print(f"  [{split:>5}] cases={len(cases):>5}  total_premises={total:>6}  "
               f"avg={avg:>5.1f}  zero_premise_cases={zero}")
     print("=" * 60)
-
-
-if __name__ == "__main__":
-    from data.data_loader import get_dataset
-    import config as cfg
-    cfg.MAX_TRAIN_SAMPLES = 20
-    cfg.MAX_VAL_SAMPLES   = 5
-    cfg.MAX_TEST_SAMPLES  = 5
-
-    output = run_stage1(get_dataset())
-    print_stage1_stats(output)

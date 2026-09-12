@@ -43,7 +43,6 @@ Cited premises are 4.4× more impactful than random ones. 86.3% of predictions a
 ```
 NLPPW/
 ├── config.py                              # All hyperparameters and paths
-├── run_pipeline.py                        # Main entry point (stages 1+2+eval)
 ├── run_seed_study.py                      # Single seeded BERT run (CLI, resumable)
 ├── check_contamination.py                 # LexGLUE vs all-data/ fingerprint check
 ├── sample.py                              # Inspect a random file from all-data/
@@ -103,20 +102,7 @@ python stage1_argument_mining/finetune_legalbert.py
 ```
 Trains on `all-data/` with similarity-filtered factual negatives. Saves to `outputs/stage1_legalbert/checkpoint-best`.
 
-### 3. Run the full pipeline
-```bash
-python run_pipeline.py
-```
-
-### 4. Run individual stages
-```bash
-python run_pipeline.py --stage 1      # Stage 1 only (premise extraction)
-python run_pipeline.py --stage 2      # Stage 2 only (outcome prediction + eval)
-python run_pipeline.py --stage eval   # Evaluation only (requires trained classifier)
-python run_pipeline.py --force        # Force re-run (ignore cached premises)
-```
-
-### 5. Run the BERT seed study (5 seeds × 3 models, ~15 h)
+### 3. Run the BERT seed study (5 seeds × 3 models, ~15 h)
 ```bash
 mkdir -p logs
 for model in fulltext premises hybrid; do

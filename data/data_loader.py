@@ -42,10 +42,3 @@ def get_dataset(max_train=config.MAX_TRAIN_SAMPLES,
         return batch
 
     return ds.map(_preprocess, batched=True, desc="Preprocessing dataset")
-
-
-if __name__ == "__main__":
-    dataset = get_dataset()
-    sample  = dataset["train"][0]
-    print("Paragraphs (first 2):", sample["paragraphs"][:2])
-    print("Violated articles:",    binary_to_label_names(sample["labels_binary"]))

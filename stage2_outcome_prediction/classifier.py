@@ -89,11 +89,3 @@ def quick_eval(clf, X_val, y_val):
     micro_f1 = f1_score(y_val, y_pred, average="micro", zero_division=0)
     print(f"Val  Macro-F1={macro_f1:.4f}  Micro-F1={micro_f1:.4f}")
     return {"macro_f1": macro_f1, "micro_f1": micro_f1}
-
-
-if __name__ == "__main__":
-    rng     = np.random.default_rng(42)
-    X_train = rng.random((200, 384))
-    y_train = (rng.random((200, 10)) > 0.85).astype(int)
-    clf     = train_classifier(X_train, y_train)
-    quick_eval(clf, rng.random((50, 384)), (rng.random((50, 10)) > 0.85).astype(int))

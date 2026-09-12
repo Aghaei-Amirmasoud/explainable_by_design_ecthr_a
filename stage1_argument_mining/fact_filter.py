@@ -161,7 +161,3 @@ def inspect_fact_negatives(
         shown += 1
         if shown >= n_cases:
             break
-
-
-if __name__ == "__main__":
-    inspect_fact_negatives()
